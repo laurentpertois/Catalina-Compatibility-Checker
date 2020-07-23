@@ -2,7 +2,7 @@
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
-# Copyright (c) 2019 Jamf.  All rights reserved.
+# Copyright (c) 2020 Jamf.  All rights reserved.
 #
 #       Redistribution and use in source and binary forms, with or without
 #       modification, are permitted provided that the following conditions are met:
@@ -31,12 +31,13 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 # This script was designed to be used as an Extension Attribute to ensure specific
-# requirements have been met to deploy macOS Mojave.
+# requirements have been met to deploy macOS Big Sur.
 #
 # General Requirements:
-# 	- OS X 10.9.0 or later
-# 	- 4GB of memory
-# 	- 12.5GB of available storage if upgrading from OS X 10.11.5 (up to 18.5GB if upgrading from an earlier release)
+#		- OS X 10.9.0 or later (It seems, as of the day I write this Apple has not yet made recommendations, this page and the script will be adapted if necessary when the information will become public)
+#		- 4GB of memory (It seems, as of the day I write this Apple has not yet made recommendations, this page and the script will be adapted if necessary when the information will become public)
+#		- 20GB of available storage (It seems, as of the day I write this Apple has not yet made recommendations, this page and the script will be adapted if necessary when the information will become public)
+#
 #
 # These last 2 requirements can be modified in the first 2 variables (MINIMUMRAM
 # and MINIMUMSPACE).
@@ -46,10 +47,10 @@
 #
 # Mac Hardware Requirements and equivalent as minimum Model Identifier
 # 	- MacBook (Early 2015 or newer), ie MacBook8,1
-# 	- MacBook Pro (Mid 2012 or newer), ie MacBookPro9,1
-# 	- MacBook Air (Mid 2012 or newer), ie MacBookAir5,1
-# 	- Mac mini (Late 2012 or newer), ie Macmini6,1
-# 	- iMac (Late 2012 or newer), ie iMac13,1
+# 	- MacBook Pro (Late 2013 or newer), ie MacBookPro11,1
+# 	- MacBook Air (Mid 2013 or newer), ie MacBookAir6,1
+# 	- Mac mini (Late 2014 or newer), ie Macmini7,1
+# 	- iMac (Mid 2014 or newer), ie iMac14,4
 # 	- iMac Pro, ie iMacPro1,1
 # 	- Mac Pro (Late 2013 or newer), ie MacPro6,1
 #
@@ -58,9 +59,7 @@
 #
 # Written by: Laurent Pertois | Senior Professional Services Engineer | Jamf
 #
-# Created On: 2017-09-18
-# Modified On: 2018-12-19 (minor changes reported by @sdpalmer)
-# Modified On: 2019-12-28 (updated for macOS Catalina by Andrew Needham)
+# Created On: 2020-07-23
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -80,12 +79,11 @@ COMPATIBILITY="False"
 ############### Let's go!
 #########################################################################################
 
-# Checks minimum version of the OS before upgrade (10.7.5)
+# Checks minimum version of the OS before upgrade (10.9.0)
 OSVERSIONMAJOR=$(sw_vers -productVersion | awk -F"." '{ print $2 }')
-OSVERSIONMINOR=$(sw_vers -productVersion | awk -F"." '{ print $3 }')
 
-# Checks if computer meets pre-requisites for Mojave
-if [[ "$OSVERSIONMAJOR" -ge 8 && "$OSVERSIONMAJOR" -le 15 || "$OSVERSIONMAJOR" -eq 9 && "OSVERSIONMINOR" -eq 0 ]]; then
+# Checks if computer meets pre-requisites for Big Sur
+if [[ "$OSVERSIONMAJOR" -ge 9 && "$OSVERSIONMAJOR" -le 16 ]]; then
 
 	# Transform GB into Bytes
 	GIGABYTES=$((1024 * 1024 * 1024))
@@ -96,6 +94,7 @@ if [[ "$OSVERSIONMAJOR" -ge 8 && "$OSVERSIONMAJOR" -le 15 || "$OSVERSIONMAJOR" -
 	MODELIDENTIFIER=$(/usr/sbin/sysctl -n hw.model)
 	MODELNAME=$(echo "$MODELIDENTIFIER" | sed 's/[^a-zA-Z]//g')
 	MODELVERSION=$(echo "$MODELIDENTIFIER" | sed 's/[^0-9,]//g' | awk -F, '{print $1}')
+	MINORMODELVERSION=$(echo "$MODELIDENTIFIER" | sed 's/[^0-9,]//g' | awk -F, '{print $2}')
 
 	# Gets amount of memory installed
 	MEMORYINSTALLED=$(/usr/sbin/sysctl -n hw.memsize)
@@ -103,20 +102,20 @@ if [[ "$OSVERSIONMAJOR" -ge 8 && "$OSVERSIONMAJOR" -le 15 || "$OSVERSIONMAJOR" -
 	# Gets free space on the boot drive
 	FREESPACE=$(diskutil info / | awk -F'[()]' '/Free Space|Available Space/ {print $2}' | sed -e 's/\ Bytes//')
 
-	# Checks if computer meets pre-requisites for Catalina
-	if [[ "$MODELNAME" == "iMac" && "$MODELVERSION" -ge 13 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
+	# Checks if computer meets pre-requisites for Big Sur
+	if [[ "$MODELNAME" == "iMac" && "$MODELVERSION" -ge 14 && "$MINORMODELVERSION" -ge 4 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
 		COMPATIBILITY="True"
 	elif [[ "$MODELNAME" == "iMacPro" && "$MODELVERSION" -ge 1 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
 		COMPATIBILITY="True"
-	elif [[ "$MODELNAME" == "Macmini" && "$MODELVERSION" -ge 6 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
+	elif [[ "$MODELNAME" == "Macmini" && "$MODELVERSION" -ge 7 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
 		COMPATIBILITY="True"
 	elif [[ "$MODELNAME" == "MacPro" && "$MODELVERSION" -ge 6 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
 	    COMPATIBILITY="True"
 	elif [[ "$MODELNAME" == "MacBook" && "$MODELVERSION" -ge 8 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
 	    COMPATIBILITY="True"
-	elif [[ "$MODELNAME" == "MacBookAir" && "$MODELVERSION" -ge 5 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
+	elif [[ "$MODELNAME" == "MacBookAir" && "$MODELVERSION" -ge 6 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
 	    COMPATIBILITY="True"
-	elif [[ "$MODELNAME" == "MacBookPro" && "$MODELVERSION" -ge 9 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
+	elif [[ "$MODELNAME" == "MacBookPro" && "$MODELVERSION" -ge 11 && "$MEMORYINSTALLED" -ge "$MINIMUMRAM" && "$FREESPACE" -ge "$MINIMUMSPACE" ]]; then
 	    COMPATIBILITY="True"
 	fi
 	# Outputs result
