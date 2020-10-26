@@ -81,11 +81,10 @@ COMPATIBILITY="False"
 #########################################################################################
 
 # Checks minimum version of the OS before upgrade (10.9.0)
-OSVERSIONMAJOR=$(sw_vers -productVersion | awk -F"." '{ print $2 }')
-OSVERSIONMINOR=$(sw_vers -productVersion | awk -F"." '{ print $3 }')
+OSVERSIONMAJOR=$(sw_vers -buildVersion | cut -c 1-2)
 
 # Checks if computer meets pre-requisites for Mojave
-if [[ "$OSVERSIONMAJOR" -ge 9 && "$OSVERSIONMAJOR" -le 15 ]]; then
+if [[ "$OSVERSIONMAJOR" -ge 13 && "$OSVERSIONMAJOR" -le 18 ]]; then
 
 	# Transform GB into Bytes
 	GIGABYTES=$((1024 * 1024 * 1024))
